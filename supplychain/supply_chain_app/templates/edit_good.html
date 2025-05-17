@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 py-8">
+    <h2 class="text-2xl font-semibold mb-6 text-gray-800">✏️ Edit Good</h2>
+
+    <form method="post" class="space-y-6 bg-white shadow-md rounded-lg p-6">
+        {% csrf_token %}
+
+        <div>
+            <label for="id_name" class="block text-sm font-medium text-gray-700">Name</label>
+            <input type="text" name="name" id="id_name" value="{{ form.name.value|default_if_none:'' }}"
+                   class="mt-1 block w-full border border-gray-400 rounded-md px-3 py-2" />
+        </div>
+
+        <div>
+            <label for="id_quantity" class="block text-sm font-medium text-gray-700">Quantity</label>
+            <input type="number" name="quantity" id="id_quantity" value="{{ form.quantity.value|default_if_none:'' }}"
+                   class="mt-1 block w-full border border-gray-400 rounded-md px-3 py-2" />
+        </div>
+
+        <div>
+            <label for="id_price" class="block text-sm font-medium text-gray-700">Price</label>
+            <input type="number" name="price" id="id_price" step="0.01"
+                   value="{{ form.price.value|default_if_none:'' }}"
+                   class="mt-1 block w-full border border-gray-400 rounded-md px-3 py-2" />
+        </div>
+
+        <div>
+            <label for="id_description" class="block text-sm font-medium text-gray-700">Description</label>
+            <textarea name="description" id="id_description" rows="3"
+                      class="mt-1 block w-full border border-gray-400 rounded-md px-3 py-2">
+                {{ form.description.value|default_if_none:'' }}
+            </textarea>
+        </div>
+
+        <div>
+            <label for="id_category" class="block text-sm font-medium text-gray-700">Category</label>
+            <select name="category" id="id_category"
+                    class="mt-1 block w-full border border-gray-400 rounded-md px-3 py-2">
+                <option value="">Select a category</option>
+                {% for cat in categories %}
+                    <option value="{{ cat.id }}"
+                        {% if form.category.value|stringformat:"s" == cat.id|stringformat:"s" %}selected{% endif %}>
+                        {{ cat.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div>
+            <label for="id_customer" class="block text-sm font-medium text-gray-700">Customer</label>
+            <select name="customer" id="id_customer"
+                    class="mt-1 block w-full border border-gray-400 rounded-md px-3 py-2">
+                <option value="">Select a customer</option>
+                {% for customer in customers %}
+                    <option value="{{ customer.id }}"
+                        {% if form.customer.value|stringformat:"s" == customer.id|stringformat:"s" %}selected{% endif %}>
+                        {{ customer.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="flex justify-between items-center">
+            <a href="{% url 'dashboard' %}" class="text-sm text-gray-600 hover:underline">← Cancel</a>
+            <button type="submit"
+                    class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition">
+                💾 Save Changes
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

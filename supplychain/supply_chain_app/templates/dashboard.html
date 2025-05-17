@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-full mx-auto px-4 py-8">
+    <h2 class="text-3xl font-bold mb-6 text-gray-800">Dashboard</h2>
+    <!-- Add/Edit Good Form -->
+    <div class="bg-white shadow-md rounded-lg p-6 mb-10">
+        <a href="{% url 'barcode_scanner' %}" class="inline-block bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition duration-200 ease-in-out mb-4">
+            Go to Barcode Scanner
+        </a><br>
+        
+        <a href="{% url 'barcode_retrieve' %}" class="inline-block bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition duration-200 ease-in-out">
+            Go to Retrieve Product by Barcode
+        </a>
+        
+        <h3 class="text-xl font-semibold mb-4 text-gray-700">
+            {% if edit_mode %}✏️ Edit Good{% else %}Add New Product{% endif %}
+        </h3>
+
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            <input type="hidden" name="submit_good" value="1">  <!-- This tells the view it's a Good form -->
+
+            <div>
+                <label for="id_name" class="block text-sm font-medium text-gray-700">Product Name</label>
+                <input class="mt-1 block w-full border border-gray-400 rounded-md px-3 py-2"
+                       type="text" name="name" id="id_name"
+                       value="{{ form.name.value|default_if_none:'' }}">
+            </div>
+
+            <div>
+                <label for="id_quantity" class="block text-sm font-medium text-gray-700">Quantity</label>
+                <input class="mt-1 block w-full border border-gray-400 rounded-md px-3 py-2"
+                       type="number" name="quantity" id="id_quantity"
+                       value="{{ form.quantity.value|default_if_none:'' }}">
+            </div>
+
+            <div>
+                <label for="id_price" class="block text-sm font-medium text-gray-700">Price</label>
+                <input class="mt-1 block w-full border border-gray-400 rounded-md px-3 py-2"
+                       type="number" name="price" id="id_price" step="0.01"
+                       value="{{ form.price.value|default_if_none:'' }}">
+            </div>
+            
+
+            <div>
+                <label for="id_description" class="block text-sm font-medium text-gray-700">Description</label>
+                <textarea class="mt-1 block w-full border border-gray-400 rounded-md px-3 py-2"
+                          name="description" id="id_description" rows="3">{{ form.description.value|default_if_none:'' }}</textarea>
+            </div>
+
+
+
+
+
+            <div>
+                <label for="id_category" class="block text-sm font-medium text-gray-700">Product Category</label>
+                <select name="category" id="id_category"
+                        class="mt-1 block w-full border border-gray-400 rounded-md px-3 py-2">
+                    <option value="">Select a category</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}" {% if form.category.value|stringformat:"s" == cat.id|stringformat:"s" %}selected{% endif %}>
+                        {{ cat.name }}
+                    </option>                    
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label for="id_customer" class="block text-sm font-medium text-gray-700">Customer</label>
+                <select name="customer" id="id_customer"
+                        class="mt-1 block w-full border border-gray-400 rounded-md px-3 py-2">
+                    <option value="">Select a customer</option>
+                    {% for customer in customers %}
+                        <option value="{{ customer.id }}"
+                            {% if form.customer.value|stringformat:"s" == customer.id|stringformat:"s" %}selected{% endif %}>
+                            {{ customer.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+
+            <div class="flex justify-between">
+                {% if edit_mode %}
+                    <a href="{% url 'dashboard' %}" class="text-sm text-gray-600 hover:underline">← Cancel Edit</a>
+                {% endif %}
+                <button type="submit"
+                        class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition">
+                    {% if edit_mode %}💾 Save Changes{% else %}➕ Add Good{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

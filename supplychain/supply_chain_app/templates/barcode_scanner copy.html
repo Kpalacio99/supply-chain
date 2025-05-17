@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="bg-white shadow-xl rounded-2xl p-6 mt-6">
+    <h3 class="text-2xl font-bold mb-6 text-indigo-600 flex items-center gap-2">
+        📦 Add New Product via Barcode (Image Capture)
+    </h3>
+
+    <form method="POST">
+        {% csrf_token %}
+
+        <div>
+            <label for="barcode" class="block text-sm font-semibold text-gray-700">Barcode</label>
+            <input type="text" id="barcode" name="barcode" class="mt-2 px-4 py-2 border rounded-lg w-full" readonly required>
+        </div>
+
+        <!-- Camera View -->
+        <div class="mt-2 flex flex-col items-center">
+            <video id="camera" autoplay class="rounded-lg border border-gray-300 w-[400px] h-[300px] object-cover"></video>
+            <canvas id="snapshot" width="400" height="300" class="hidden"></canvas>
+            <button type="button" id="capture" class="mt-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
+                Capture Barcode
+            </button>
+            <button type="button" id="switch-camera" class="mt-2 px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600">
+                Switch Camera
+            </button>
+            <button type="button" id="toggle-camera" class="mt-2 px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600">
+                Turn Off Camera
+            </button>
+        </div>
+
+        <!-- User Selection -->
+        <div>
+            <label for="user" class="block text-sm font-semibold text-gray-700">Select User</label>
+            <select id="user" name="user" class="mt-2 px-4 py-2 border rounded-lg w-full" required>
+                {% for user in users %}
+                    <option value="{{ user.id }}">{{ user.username }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Product Details -->
+        <div>
+            <label for="name" class="block text-sm font-semibold text-gray-700">Name</label>
+            <input type="text" id="name" name="name" class="mt-2 px-4 py-2 border rounded-lg w-full" required>
+        </div>
+
+        <div>
+            <label for="quantity" class="block text-sm font-semibold text-gray-700">Quantity</label>
+            <input type="number" id="quantity" name="quantity" class="mt-2 px-4 py-2 border rounded-lg w-full" required>
+        </div>
+
+        <div>
+            <label for="price" class="block text-sm font-semibold text-gray-700">Price</label>
+            <input type="number" id="price" name="price" class="mt-2 px-4 py-2 border rounded-lg w-full" required>
+        </div>
+
+        <div>
+            <label for="description" class="block text-sm font-semibold text-gray-700">Description</label>
+            <textarea id="description" name="description" class="mt-2 px-4 py-2 border rounded-lg w-full" rows="3" required></textarea>
+        </div>
+
+        <div>
+            <label for="category" class="block text-sm font-semibold text-gray-700">Category</label>
+            <select id="category" name="category" class="mt-2 px-4 py-2 border rounded-lg w-full">
+                {% for category in categories %}
+                <option value="{{ category.id }}">{{ category.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="mt-4">
+            <button type="submit" class="px-6 py-3 bg-indigo-600 text-white rounded-lg w-full hover:bg-indigo-700">
+                Save Product
+            </button>
+        </div>
+    </form>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+
+<script>
+    const video = document.getElementById('camera');
+    const canvas = document.getElementById('snapshot');
+    const ctx = canvas.getContext('2d');
+    const barcodeInput = document.getElementById('barcode');
+    const captureBtn = document.getElementById('capture');
+    const switchBtn = document.getElementById('switch-camera');
+    const toggleBtn = document.getElementById('toggle-camera');
+
+    let currentStream;
+    let usingRearCamera = true;
+    let cameraOn = true;
+
+    // Function to start the camera
+    function startCamera(facingMode = "environment") {
+        if (currentStream) {
+            currentStream.getTracks().forEach(track => track.stop());
+        }
+
+        navigator.mediaDevices.getUserMedia({ video: { facingMode } })
+            .then(stream => {
+                currentStream = stream;
+                video.srcObject = stream;
+                cameraOn = true;
+                toggleBtn.innerText = "Turn Off Camera";
+            })
+            .catch(err => {
+                console.error("Camera error:", err);
+            });
+    }
+
+    // Start the default camera
+    startCamera();
+
+    // Capture image from the camera and decode the barcode
+    captureBtn.addEventListener('click', () => {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const imageDataUrl = canvas.toDataURL('image/png');
+
+        Quagga.decodeSingle({
+            src: imageDataUrl,
+            numOfWorkers: 0,
+            inputStream: {
+                size: 800
+            },
+            decoder: {
+                readers: ["code_128_reader", "ean_reader", "ean_8_reader", "upc_reader", "upc_e_reader"]
+            },
+        }, function(result) {
+            if (result && result.codeResult) {
+                barcodeInput.value = result.codeResult.code;
+                console.log("Barcode detected:", result.codeResult.code);
+            } else {
+                alert("No barcode detected. Try again with a clearer image.");
+            }
+        });
+    });
+
+    // Switch between front and rear camera
+    switchBtn.addEventListener('click', () => {
+        usingRearCamera = !usingRearCamera;
+        const newFacingMode = usingRearCamera ? "environment" : "user";
+        startCamera(newFacingMode);
+    });
+
+    // Toggle the camera on/off
+    toggleBtn.addEventListener('click', () => {
+        if (cameraOn) {
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+            }
+            video.srcObject = null;
+            cameraOn = false;
+            toggleBtn.innerText = "Turn On Camera";
+        } else {
+            const mode = usingRearCamera ? "environment" : "user";
+            startCamera(mode);
+        }
+    });
+</script>
+
+{% endblock %}
